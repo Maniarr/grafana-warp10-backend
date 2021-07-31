@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
 	"github.com/gojek/heimdall/v7/httpclient"
+	"github.com/mitchellh/mapstructure"
 )
 
 var (
@@ -50,10 +51,34 @@ type ConfigDatasource struct {
 	Path string `json:"path"`
 }
 
-type ResponseModel struct {
-	Name   string            `json:"c"`
-	Labels map[string]string `json:"l"`
-	Values [][2]float64      `json:"v"`
+type Warp10Response struct {
+	Name   string            `json:"c" mapstructure:"c"`
+	Labels map[string]string `json:"l" mapstructure:"l"`
+	Values [][2]float64      `json:"v" mapstructure:"v"`
+}
+
+func UnmarshalWarp10Response(raw_response []interface{}) []Warp10Response {
+	warp10_responses := make([]Warp10Response, 0)
+
+	for _, raw_value := range raw_response {
+
+		switch raw_value.(type) {
+		case []interface{}:
+			warp10_responses = append(warp10_responses, UnmarshalWarp10Response(raw_value.([]interface{}))...)
+		case interface{}:
+			var response Warp10Response
+
+			err := mapstructure.Decode(raw_value.(map[string]interface{}), &response)
+
+			if err != nil {
+				log.DefaultLogger.Error("UnmarshalWarp10Response", "cast error", err)
+			}
+
+			warp10_responses = append(warp10_responses, response)
+		}
+	}
+
+	return warp10_responses
 }
 
 func (d *Warp10Datasource) query(_ context.Context, pCtx backend.PluginContext, query backend.DataQuery) backend.DataResponse {
@@ -101,25 +126,11 @@ func (d *Warp10Datasource) query(_ context.Context, pCtx backend.PluginContext, 
 		return response
 	}
 
-	var rms []ResponseModel
+	var warp10_response []interface{}
 
-	response.Error = json.Unmarshal(buf, &rms)
+	response.Error = json.Unmarshal(buf, &warp10_response)
 
-	if response.Error != nil {
-		var rms_array [][]ResponseModel
-
-		response.Error = json.Unmarshal(buf, &rms_array)
-
-		if response.Error != nil {
-			return response
-		}
-
-		for _, rm_items := range rms_array {
-			rms = append(rms, rm_items...)
-		}
-	}
-
-	for _, rm := range rms {
+	for _, rm := range UnmarshalWarp10Response(warp10_response) {
 		if rm.Labels == nil {
 			continue
 		}
