@@ -29,7 +29,7 @@ type Warp10Datasource struct {
 }
 
 func (d *Warp10Datasource) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	log.DefaultLogger.Info("QueryData called", "request", req)
+	log.DefaultLogger.Debug("QueryData called", "request", req)
 
 	response := backend.NewQueryDataResponse()
 
@@ -83,10 +83,12 @@ func (d *Warp10Datasource) query(_ context.Context, pCtx backend.PluginContext, 
 		qm.QueryText = strings.ReplaceAll(qm.QueryText, "$toISO", "'"+query.TimeRange.To.Format(time.RFC3339)+"'")
 	}
 
+	log.DefaultLogger.Debug("QueryData called", "query", qm.QueryText)
+
 	res, err := client.Post(configDatasource.Path, strings.NewReader(qm.QueryText), nil)
 
 	if err != nil {
-		log.DefaultLogger.Error("query", "error http", err)
+		log.DefaultLogger.Error("query", "http error", err)
 
 		response.Error = err
 	}
@@ -144,18 +146,18 @@ func (d *Warp10Datasource) query(_ context.Context, pCtx backend.PluginContext, 
 }
 
 func (d *Warp10Datasource) CheckHealth(_ context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
-	log.DefaultLogger.Info("CheckHealth called", "request", req)
+	log.DefaultLogger.Debug("CheckHealth called", "request", req)
 
 	var config ConfigDatasource
 
 	err := json.Unmarshal(req.PluginContext.DataSourceInstanceSettings.JSONData, &config)
 
 	if err != nil {
-		log.DefaultLogger.Info("CheckHealth", "error", err)
+		log.DefaultLogger.Info("CheckHealth", "response error", err)
 	}
 
 	res, err := client.Post(config.Path, nil, nil)
-	log.DefaultLogger.Info("CheckHealth", "response", res.StatusCode)
+	log.DefaultLogger.Debug("CheckHealth", "response", res.StatusCode)
 
 	var status = backend.HealthStatusOk
 	var message = "Data source is working"
@@ -163,7 +165,7 @@ func (d *Warp10Datasource) CheckHealth(_ context.Context, req *backend.CheckHeal
 	if err != nil || res.StatusCode != 200 {
 		status = backend.HealthStatusError
 		message = "randomized error"
-		log.DefaultLogger.Info("CheckHealth", "error", err)
+		log.DefaultLogger.Info("CheckHealth", "response error", err)
 	}
 
 	return &backend.CheckHealthResult{

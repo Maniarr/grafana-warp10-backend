@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	if err := datasource.Manage("maniarr-warp10-backend-datasource", NewWarp10Datasource, datasource.ManageOpts{}); err != nil {
+	if err := datasource.Manage("maniarr-warp10-datasource", NewWarp10Datasource, datasource.ManageOpts{}); err != nil {
 		log.DefaultLogger.Error(err.Error())
 		os.Exit(1)
 	}
