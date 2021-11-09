@@ -59,11 +59,11 @@ export class ConfigEditor extends PureComponent<Props, State> {
             inputWidth={20}
             onChange={this.onPathChange}
             value={jsonData.path || ''}
-            placeholder="json field returned to frontend"
+            placeholder="http://127.0.0.1:8080/api/v0/exec"
           />
         </div>
 
-        <div className="gf-form-inline">
+        {/* <div className="gf-form-inline">
           <div className="gf-form">
             <SecretFormField
               isConfigured={(secureJsonFields && secureJsonFields.token) as boolean}
@@ -76,7 +76,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
               onChange={this.onTokenChange}
             />
           </div>
-        </div>
+        </div> */}
       </div>
     );
   }

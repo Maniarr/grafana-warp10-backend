@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"strings"
 	"time"
+	"net/http"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
@@ -167,21 +168,21 @@ func (d *Warp10Datasource) CheckHealth(_ context.Context, req *backend.CheckHeal
 		log.DefaultLogger.Info("CheckHealth", "response error", err)
 	}
 
-	res, err := client.Post(config.Path, nil, nil)
-	log.DefaultLogger.Debug("CheckHealth", "response", res.StatusCode)
+	res, err := client.Post(config.Path, strings.NewReader(""), http.Header{})
 
 	var status = backend.HealthStatusOk
 	var message = "Data source is working"
 
 	if err != nil || res.StatusCode != 200 {
 		status = backend.HealthStatusError
-		message = "randomized error"
+		message = "Error to communicate with warp10"
 		log.DefaultLogger.Info("CheckHealth", "response error", err)
 	}
 
 	return &backend.CheckHealthResult{
 		Status:  status,
 		Message: message,
+		JSONDetails: []byte{},
 	}, nil
 }
 
