@@ -122,7 +122,7 @@ func (d *Warp10Datasource) query(_ context.Context, pCtx backend.PluginContext, 
 	buf, err := ioutil.ReadAll(res.Body)
 
 	if res.StatusCode != 200 {
-		response.Error = errors.New(string(buf))
+		response.Error = errors.New(string(res.Header.Get("X-Warp10-Error-Message")))
 
 		return response
 	}
