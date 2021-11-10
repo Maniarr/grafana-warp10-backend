@@ -174,9 +174,10 @@ func (d *Warp10Datasource) CheckHealth(_ context.Context, req *backend.CheckHeal
 	var message = "Data source is working"
 
 	if err != nil || res.StatusCode != 200 {
-		status = backend.HealthStatusError
-		message = "Error to communicate with warp10"
 		log.DefaultLogger.Info("CheckHealth", "response error", err)
+		
+		status = backend.HealthStatusError
+		message = err.Error()
 	}
 
 	return &backend.CheckHealthResult{
