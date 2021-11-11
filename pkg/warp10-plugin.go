@@ -4,7 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/ioutil"
+	"strconv"
 	"strings"
 	"time"
 	"net/http"
@@ -101,12 +103,24 @@ func (d *Warp10Datasource) query(_ context.Context, pCtx backend.PluginContext, 
 		return response
 	}
 
+	log.DefaultLogger.Debug("QueryData called", "query request", query)
+	
+	if strings.Contains(qm.QueryText, "$token") {
+		token, _ := pCtx.DataSourceInstanceSettings.DecryptedSecureJSONData["token"]
+
+		qm.QueryText = strings.ReplaceAll(qm.QueryText, "$token", fmt.Sprintf("'%v'", token))
+	}
+
 	if strings.Contains(qm.QueryText, "$fromISO") {
-		qm.QueryText = strings.ReplaceAll(qm.QueryText, "$fromISO", "'"+query.TimeRange.From.Format(time.RFC3339)+"'")
+		qm.QueryText = strings.ReplaceAll(qm.QueryText, "$fromISO", fmt.Sprintf("'%v'", query.TimeRange.From.Format(time.RFC3339)))
 	}
 
 	if strings.Contains(qm.QueryText, "$toISO") {
-		qm.QueryText = strings.ReplaceAll(qm.QueryText, "$toISO", "'"+query.TimeRange.To.Format(time.RFC3339)+"'")
+		qm.QueryText = strings.ReplaceAll(qm.QueryText, "$toISO", fmt.Sprintf("'%v'", query.TimeRange.To.Format(time.RFC3339)))
+	}
+
+	if strings.Contains(qm.QueryText, "$interval") {
+		qm.QueryText = strings.ReplaceAll(qm.QueryText, "$interval",  strconv.FormatInt(query.Interval.Nanoseconds(), 10))
 	}
 
 	log.DefaultLogger.Debug("QueryData called", "query", qm.QueryText)
@@ -122,7 +136,7 @@ func (d *Warp10Datasource) query(_ context.Context, pCtx backend.PluginContext, 
 	buf, err := ioutil.ReadAll(res.Body)
 
 	if res.StatusCode != 200 {
-		response.Error = errors.New(string(res.Header.Get("X-Warp10-Error-Message")))
+		response.Error = errors.New(fmt.Sprintf("Line %v: %v", res.Header.Get("X-Warp10-Error-Line"), res.Header.Get("X-Warp10-Error-Message")))
 
 		return response
 	}
@@ -175,7 +189,7 @@ func (d *Warp10Datasource) CheckHealth(_ context.Context, req *backend.CheckHeal
 
 	if err != nil || res.StatusCode != 200 {
 		log.DefaultLogger.Info("CheckHealth", "response error", err)
-		
+
 		status = backend.HealthStatusError
 		message = err.Error()
 	}
