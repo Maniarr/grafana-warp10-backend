@@ -1,9 +1,9 @@
 import React, { ChangeEvent } from 'react';
 import { InlineField, Input, SecretInput } from '@grafana/ui';
 import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
-import { MyDataSourceOptions, MySecureJsonData } from '../types';
+import { Warp10DataSourceOptions, Warp10SecureJsonData } from '../types';
 
-interface Props extends DataSourcePluginOptionsEditorProps<MyDataSourceOptions> {}
+interface Props extends DataSourcePluginOptionsEditorProps<Warp10DataSourceOptions> {}
 
 export function ConfigEditor(props: Props) {
   const { onOptionsChange, options } = props;
@@ -40,7 +40,7 @@ export function ConfigEditor(props: Props) {
   };
 
   const { jsonData, secureJsonFields } = options;
-  const secureJsonData = (options.secureJsonData || {}) as MySecureJsonData;
+  const secureJsonData = (options.secureJsonData || {}) as Warp10SecureJsonData;
 
   return (
     <div className="gf-form-group">

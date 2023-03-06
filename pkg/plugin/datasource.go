@@ -85,6 +85,8 @@ func (d *Datasource) QueryData(ctx context.Context, req *backend.QueryDataReques
 
 type queryModel struct {
 	Warpscript string
+	Alias      string
+	ShowLabels bool
 }
 
 type GTS struct {
@@ -187,11 +189,26 @@ func (d *Datasource) query(_ context.Context, pCtx backend.PluginContext, query 
 	log.DefaultLogger.Debug("Warp10 response", gtsList)
 
 	for _, gts := range gtsList {
-		if gts.Labels == nil {
-			continue
+		gtsName := gts.ClassName
+		labels := make(map[string]string)
+
+		if qm.Alias != "" {
+			gtsName = qm.Alias
+
+			for key, value := range gts.Labels {
+				labelKey := fmt.Sprintf("$label_%s", key)
+
+				if strings.Contains(gtsName, labelKey) {
+					gtsName = strings.ReplaceAll(gtsName, labelKey, value)
+				}
+			}
 		}
 
-		frame := data.NewFrame(gts.ClassName)
+		if gts.Labels != nil && qm.ShowLabels {
+			labels = gts.Labels
+		}
+
+		frame := data.NewFrame(query.RefID)
 
 		times := []time.Time{}
 		values := []float64{}
@@ -202,8 +219,8 @@ func (d *Datasource) query(_ context.Context, pCtx backend.PluginContext, query 
 		}
 
 		frame.Fields = append(frame.Fields,
-			data.NewField("time", gts.Labels, times),
-			data.NewField(gts.ClassName, gts.Labels, values),
+			data.NewField("time", labels, times),
+			data.NewField(gtsName, labels, values),
 		)
 
 		response.Frames = append(response.Frames, frame)

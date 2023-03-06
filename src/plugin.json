@@ -3,6 +3,7 @@
   "type": "datasource",
   "name": "Warp10 Backend",
   "id": "maniarr-warp10backend-datasource",
+  "alerting": true,
   "metrics": true,
   "backend": true,
   "executable": "gpx_warp10_backend",
