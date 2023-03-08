@@ -43,4 +43,4 @@ Example:
 ### Query options
 
 - `Show labels`: Show labels of the Warp10 GTS.
-- `Pattern namming`: Pattern to rename serie. Pattern `$label_<warp10_label_name>` will be interpolated with the value of the Warp10 label if it exists.
+- `Alias by`: Pattern to rename serie. Pattern `$label_<warp10_label_name>` will be interpolated with the value of the Warp10 label if it exists.
