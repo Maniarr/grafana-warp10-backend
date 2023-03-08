@@ -134,15 +134,12 @@ func UnmarshalWarp10Response(raw []interface{}) GTSList {
 func (d *Datasource) query(_ context.Context, pCtx backend.PluginContext, query backend.DataQuery) backend.DataResponse {
 	var response backend.DataResponse
 
-	// Unmarshal the JSON into our queryModel.
 	var qm queryModel
 
 	err := json.Unmarshal(query.JSON, &qm)
 	if err != nil {
 		return backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("json unmarshal: %v", err.Error()))
 	}
-
-	log.DefaultLogger.Debug("Execute query", query, qm)
 
 	if strings.Contains(qm.Warpscript, "$read_token") {
 		qm.Warpscript = strings.ReplaceAll(qm.Warpscript, "$read_token", fmt.Sprintf("'%v'", d.Client.ReadToken))
@@ -157,8 +154,10 @@ func (d *Datasource) query(_ context.Context, pCtx backend.PluginContext, query 
 	}
 
 	if strings.Contains(qm.Warpscript, "$interval") {
-		qm.Warpscript = strings.ReplaceAll(qm.Warpscript, "$interval", strconv.FormatInt(query.Interval.Nanoseconds(), 10))
+		qm.Warpscript = strings.ReplaceAll(qm.Warpscript, "$interval", strconv.FormatInt(query.Interval.Microseconds(), 10))
 	}
+
+	log.DefaultLogger.Debug("Execute query", query, qm)
 
 	resp, err := d.Client.Exec(qm.Warpscript)
 
