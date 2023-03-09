@@ -1,23 +1,28 @@
 {
   "$schema": "https://raw.githubusercontent.com/grafana/grafana/master/docs/sources/developers/plugins/plugin.schema.json",
   "type": "datasource",
-  "name": "Warp10 Backend",
-  "id": "maniarr-warp10backend-datasource",
+  "name": "Warp10",
+  "id": "maniarr-warp10-datasource",
   "alerting": true,
   "metrics": true,
   "backend": true,
-  "executable": "gpx_warp10_backend",
+  "executable": "gpx_warp10_datasource",
   "info": {
-    "description": "",
+    "description": "Non-official plugin datasource for Warp10.",
     "author": {
       "name": "Maniarr"
     },
-    "keywords": ["datasource"],
+    "keywords": ["datasource", "warp10"],
     "logos": {
       "small": "img/logo.svg",
       "large": "img/logo.svg"
     },
-    "links": [],
+    "links": [
+      {
+        "name": "Github",
+        "url": "https://github.com/Maniarr/grafana-warp10-datasource"
+      }
+    ],
     "screenshots": [],
     "version": "%VERSION%",
     "updated": "%TODAY%"
