@@ -2,7 +2,7 @@ version: '3.0'
 
 services:
   grafana:
-    container_name: 'maniarr-warp10backend-datasource'
+    container_name: 'maniarr-warp10-datasource'
     build:
       context: ./.config
       args:
@@ -11,7 +11,7 @@ services:
       - 3000:3000/tcp
     environment:
       # - GF_LOG_LEVEL=debug
-      - GF_LOG_FILTERS=plugin.maniarr-warp10backend-datasource:debug
+      - GF_LOG_FILTERS=plugin.maniarr-warp10-datasource:debug
     volumes:
-      - ./dist:/var/lib/grafana/plugins/maniarr-warp10backend-datasource
+      - ./dist:/var/lib/grafana/plugins/maniarr-warp10-datasource
       - ./provisioning:/etc/grafana/provisioning
