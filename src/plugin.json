@@ -6,7 +6,7 @@
   "alerting": true,
   "metrics": true,
   "backend": true,
-  "executable": "gpx_warp10_datasource",
+  "executable": "gpx_maniarr_warp10_datasource",
   "info": {
     "description": "Non-official plugin datasource for Warp10.",
     "author": {
@@ -20,7 +20,7 @@
     "links": [
       {
         "name": "Github",
-        "url": "https://github.com/Maniarr/grafana-warp10-datasource"
+        "url": "https://github.com/Maniarr/grafana-warp10-backend"
       }
     ],
     "screenshots": [],

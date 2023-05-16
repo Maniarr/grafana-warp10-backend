@@ -4,9 +4,17 @@ export interface Warp10Query extends DataQuery {
   warpscript?: string;
   alias?: string;
   showLabels: boolean;
+  className?: string;
+  labelName?: string;
 }
 
-export const DEFAULT_QUERY: Partial<Warp10Query> = {};
+export const DEFAULT_QUERY: Partial<Warp10Query> = {
+  warpscript: undefined,
+  alias: undefined,
+  showLabels: false,
+  className: undefined,
+  labelName: undefined,
+};
 
 /**
  * These are options configured for each DataSource instance

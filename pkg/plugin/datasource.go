@@ -71,9 +71,13 @@ func (d *Datasource) QueryData(ctx context.Context, req *backend.QueryDataReques
 	// create response struct
 	response := backend.NewQueryDataResponse()
 
+	log.DefaultLogger.Debug("req", req)
+
 	// loop over queries and execute them individually.
 	for _, q := range req.Queries {
+		log.DefaultLogger.Debug("q", q)
 		res := d.query(ctx, req.PluginContext, q)
+		log.DefaultLogger.Debug("res", res)
 
 		// save the response in a hashmap
 		// based on with RefID as identifier
@@ -87,6 +91,11 @@ type queryModel struct {
 	Warpscript string
 	Alias      string
 	ShowLabels bool
+}
+
+type queryVariableModel struct {
+	ClassName string
+	LabelName string
 }
 
 type GTS struct {
@@ -131,14 +140,86 @@ func UnmarshalWarp10Response(raw []interface{}) GTSList {
 	return gtsList
 }
 
+func (d *Datasource) queryVariable(pCtx backend.PluginContext, qvm queryVariableModel, query backend.DataQuery) backend.DataResponse {
+	var response backend.DataResponse
+
+	log.DefaultLogger.Debug("query varaible", pCtx, query)
+
+	resp, err := d.Client.Exec(fmt.Sprintf(`
+		[ '%s' '%s' {  } ] FINDSETS
+		SWAP 'sets' STORE
+		$sets '%s' GET
+		`, d.Client.ReadToken, qvm.ClassName, qvm.LabelName))
+
+	if err != nil {
+		log.DefaultLogger.Error("Error to exec query", err)
+
+		response.Error = err
+
+		return response
+	}
+
+	log.DefaultLogger.Debug("Query response", string(resp))
+
+	var warp10VarResponse [3]interface{}
+
+	err = json.Unmarshal(resp, &warp10VarResponse)
+
+	if err != nil {
+		log.DefaultLogger.Error("Error to parse warp10 response", err)
+
+		response.Error = err
+
+		return response
+	}
+
+	if len(warp10VarResponse) == 3 {
+		values := make([]string, 0)
+
+		for _, value := range warp10VarResponse[0].([]interface{}) {
+			values = append(values, value.(string))
+		}
+
+		log.DefaultLogger.Debug("values", values)
+
+		frame := data.NewFrame(query.RefID)
+
+		frame.Fields = append(frame.Fields,
+			data.NewField("value", make(map[string]string), values),
+		)
+
+		response.Frames = append(response.Frames, frame)
+
+		return response
+	} else {
+		log.DefaultLogger.Error("Findstats response is not warp10 valid response")
+
+		return backend.ErrDataResponse(backend.StatusBadRequest, "Warp10 findsets response not supported")
+	}
+}
+
 func (d *Datasource) query(_ context.Context, pCtx backend.PluginContext, query backend.DataQuery) backend.DataResponse {
 	var response backend.DataResponse
 
 	var qm queryModel
+	var qvm queryVariableModel
 
 	err := json.Unmarshal(query.JSON, &qm)
 	if err != nil {
+		log.DefaultLogger.Debug("Failed to unmarshal request")
 		return backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("json unmarshal: %v", err.Error()))
+	}
+
+	if qm.Warpscript == "" {
+		err = json.Unmarshal(query.JSON, &qvm)
+		if err != nil {
+			log.DefaultLogger.Debug("Failed to unmarshal request")
+			return backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("json unmarshal: %v", err.Error()))
+		}
+
+		if qvm.ClassName != "" && qvm.LabelName != "" {
+			return d.queryVariable(pCtx, qvm, query)
+		}
 	}
 
 	if strings.Contains(qm.Warpscript, "$read_token") {
